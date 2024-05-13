@@ -1,0 +1,63 @@
+﻿@implements IDisposable
+
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">
+            <img src="/img/logo.svg" alt="" width="30" height="24">
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+            <div class="navbar-nav">
+                <button class="btn btn-secondary mx-1" aria-current="page" href="#">Калькуляторы</button>
+                <button class="btn btn-secondary mx-1" @onclick="@(() => NavigationManager.NavigateTo("/catalog", forceLoad: true))">Каталог товаров</button>
+                <AuthorizeView Roles="User,Admin">
+                    <button class="btn btn-secondary mx-1" @onclick="@(() => NavigationManager.NavigateTo("/myrooms", forceLoad: true))">Ваши помещения</button>
+                    <button class="btn btn-secondary mx-1" @onclick="@(() => NavigationManager.NavigateTo("/myestimates", forceLoad: true))">Сметы</button>
+                </AuthorizeView>
+                <AuthorizeView Roles="Admin">
+                    <button class="btn btn-success mx-1" @onclick="@(() => NavigationManager.NavigateTo("/newproduct"))">Добавить товар</button>
+                </AuthorizeView>
+            </div>
+        </div>
+        <AuthorizeView>
+            <Authorized>
+                <p class="my-auto">Добро пожаловать, @context.User.Identity.Name</p>
+                <form action="Account/Logout" method="post">
+                    <AntiforgeryToken />
+                    <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                    <button type="submit" class="btn btn-danger mx-1">Выйти</button>
+                </form>
+            </Authorized>
+            <NotAuthorized>
+                <button class="btn btn-secondary" @onclick="@(() => NavigationManager.NavigateTo("/Account/Login", forceLoad: true))">Войти</button>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
+</nav>
+
+@code {
+    private string? currentUrl;
+
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}
+

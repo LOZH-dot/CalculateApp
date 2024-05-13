@@ -1,0 +1,100 @@
+﻿@page "/myrooms"
+
+@using CalculateApp.Data
+@using CalculateApp.Data.CalculateApp
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+
+@attribute [Authorize]
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+
+@inherits OwningComponentBase<CalculateAppService>
+@rendermode InteractiveServer
+
+            <div class="card">
+                <div class="card-header text-center">
+				        Добавить помещение
+                </div>
+                <div class="card-body row">
+                    <div class="card text-dark bg-light mx-auto mb-3" style="max-width: 50%;">
+                        <div class="card-header text-center">Информация о помещении</div>
+                        <div class="card-body">
+					        <p class="card-text mb-0">Название помещения</p>
+                            <InputText @bind-Value="nRoom.Name" class="form-control w-75" placeholder="Название помещения" />
+                            <p class="card-text mb-0">Длина</p>
+                            <InputNumber @bind-Value="nRoom.Lenght" class="form-control w-75" placeholder="Длина" min="0"/>
+                            <p class="card-text mb-0">Ширина</p>
+                            <InputNumber @bind-Value="nRoom.Width" class="form-control w-75" placeholder="Ширина" min="0"/>
+                            <p class="card-text mb-0">Высота</p>
+                            <InputNumber @bind-Value="nRoom.Height" class="form-control w-75" placeholder="Высота" min="0"/>
+                        </div>
+                    <button type="button" class="btn btn-success col-3 mx-auto mb-3" @onclick="@SaveRoom">Добавить</button>
+                    </div>
+                </div>
+            </div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Имя</th>
+            <th scope="col">Длина</th>
+            <th scope="col">Ширина</th>
+            <th scope="col">Высота</th>
+            <th scope="col">Действие</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (rooms != null)
+        {
+            @foreach (var room in rooms)
+            {
+                <tr>
+                    <th scope="row">@room.Name</th>
+                    <td>@room.Lenght</td>
+                    <td>@room.Width</td>
+                    <td>@room.Height</td>
+                    <td>
+                        <button type="button" class="btn btn-danger" @onclick="@(() => DeleteRoom(room))">Удалить</button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Room> rooms;
+
+    private Room nRoom = new();
+    private string AspUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            var currentUser = await UserManager.GetUserAsync(user);
+            rooms = await Service.GetRoomsAsync(currentUser.Id);
+            AspUserId = currentUser.Id;
+            StateHasChanged();
+        }
+    }
+
+    private async void DeleteRoom(Room room)
+    {
+        await Service.DeleteRoomAsync(room);
+        rooms.Remove(room);
+    }
+
+    private async void SaveRoom()
+    {
+        nRoom.AspNetUserId = AspUserId;
+        await Service.CreateRoomAsync(nRoom);
+        rooms.Add(nRoom);
+        nRoom = new();
+    }
+}

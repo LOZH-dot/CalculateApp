@@ -1,0 +1,148 @@
+﻿@page "/myestimates"
+@using CalculateApp.Data
+@using CalculateApp.Data.CalculateApp
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+
+@attribute [Authorize]
+@inherits OwningComponentBase<CalculateAppService>
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager NavigationManager;
+
+@rendermode InteractiveServer
+
+<div class="card">
+    <div class="card-header text-center">
+        Мои сметы
+    </div>
+    <div class="card-body row">
+        <div class="card text-dark bg-light mx-auto mb-3" style="max-width: 45%;">
+            <div class="card-header text-center">Активная смета</div>
+            <div class="card-body">
+                @if (activeEstimate != null)
+                {
+                    int i = 1;
+
+                    <p class="card-text">Активной сметой является: @activeEstimate.Name</p>
+                    <p class="card-text text-center fs-4">Товары в смете</p>
+
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Наименование товара</th>
+                                <th scope="col">Количество</th>
+                                <th scope="col">Действие</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var pEst in productsEstimates)
+                            {
+                                <tr>
+                                    <th scope="row">@i</th>
+                                    <td>@pEst.Product.Name</td>
+                                    <td>@pEst.Count</td>
+                                    <td>
+                                        <button type="button" class="btn btn-primary" @onclick="@(() => NavigationManager.NavigateTo($"/catalog/{pEst.Product.Id}", forceLoad: true))">Перейти</button>
+                                        <button type="button" class="btn btn-danger" @onclick="@(() => DeleteProductInActiveEstimate(pEst))">Удалить</button>
+                                    </td>
+                                </tr>
+
+                                i++;
+                            }
+                        </tbody>
+                    </table>
+
+                    @if (productsEstimates.Count != 0)
+                    {
+                        <button type="button" class="btn btn-success" @onclick="@CloseActiveEstimate">Закрыть смету</button>
+                    }
+                }
+                else
+                {
+                    <p class="card-text md-0">У вас нет активной сметы! Создайте ее сейчас!</p>
+                    <InputText @bind-Value="nEstimate.Name" class="form-control w-50" placeholder="Наименование сметы" />
+                    <button type="button" class="btn btn-success mt-3" @onclick="@CreateEstimate">Создать смету</button>
+                }
+            </div>
+            <div class="card-header text-center">Информация о готовых сметах</div>
+            <div class="card-body">
+                @if (doneEstimates != null && doneEstimates.Count != 0)
+                {
+                    int i = 1;
+
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Наименовение сметы</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var estimate in doneEstimates)
+                            {
+                                <tr>
+                                    <th scope="row">@i</th>
+                                    <td>@estimate.Name</td>
+                                </tr>
+
+                                i++;
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p class="card-text">У вас еще нет готовых смет!</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Estimate> doneEstimates;
+    private Estimate? activeEstimate;
+    private List<ProductsEstimate>? productsEstimates;
+    private Estimate nEstimate = new();
+    private string AspUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            var currentUser = await UserManager.GetUserAsync(user);
+            doneEstimates = await Service.GetDoneEstimatesAsync(currentUser.Id);
+            activeEstimate = await Service.GetActiveEstimateAsync(currentUser.Id);
+            productsEstimates = await Service.GetActiveProductsEstimatesAsync(currentUser.Id);
+            AspUserId = currentUser.Id;
+            StateHasChanged();
+        }
+    }
+
+    private async void CreateEstimate()
+    {
+        nEstimate.AspUserId = AspUserId;
+        nEstimate.IsActive = true;
+
+        await Service.CreateEstimateAsync(nEstimate);
+        NavigationManager.NavigateTo("/myestimates", forceLoad: true);
+    }
+
+    private async void CloseActiveEstimate()
+    {
+        await Service.CloseActiveEstimateAsync();
+        NavigationManager.NavigateTo("/myestimates", forceLoad: true);
+    }
+
+    private async void DeleteProductInActiveEstimate(ProductsEstimate productsEstimate)
+    {
+        await Service.DeleteProductEstimateAsync(productsEstimate);
+        productsEstimates.Remove(productsEstimate);
+    }
+}

@@ -1,0 +1,273 @@
+﻿@page "/catalog/{productId?}"
+@using CalculateApp.Data
+@using CalculateApp.Data.CalculateApp
+@using Microsoft.AspNetCore.Identity
+
+@inherits OwningComponentBase<CalculateAppService>
+@inject NavigationManager NavigationManager
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+
+@rendermode InteractiveServer
+
+@if (product != null)
+{
+    // NotChangeMode
+    if (!isChangeMode){
+        <div class="h-50 w-50 mx-auto">
+            <div class="card">
+                <div class="card-header text-center">
+				        @product.Name (@product.Category.Name)
+                </div>
+                <div class="card-body row">
+                    <div class="card text-dark bg-light mx-auto mb-3" style="max-width: 80%;">
+                        <div class="card-header text-center">Внешний вид</div>
+                        <div class="card-body">
+					        <img src="@product.Image" class="img-fluid rounded m-1" alt="..." style="min-width: 100%">      
+                        </div>
+                    </div>
+			        <div class="card text-dark bg-light mx-auto mb-3" style="max-width: 80%;">
+                        <div class="card-header text-center">Информация о товаре</div>
+                        <div class="card-body">
+					        <p class="card-text">Наименование товара: @product.Name</p>     
+					        <p class="card-text">Описание товара: @product.Description</p>          
+					        <p class="card-text">Категория: @product.Category.Name</p>
+					        <p class="card-text text-center fs-4">Характеристики</p>
+
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">#</th>
+                                            <th scope="col">Наименование</th>
+                                            <th scope="col">Значение</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (@product.Characteristics.Count != 0)
+                                        {
+                                            int i = 1;
+                                            @foreach (var characteristic in product.Characteristics)
+                                            {
+                                                <tr>
+                                                    <th scope="row">@i</th>
+                                                    <td>@characteristic.Name</td>
+                                                    <td>@characteristic.Value</td>
+                                                </tr>
+                                                i++;
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                        </div>
+                        <div class="row">
+                            <AuthorizeView>
+                                @if (activeEstimate != null)
+                                {
+                                    <div class="card text-white bg-success mb-3 mx-auto" style="max-width: 45%;">
+                                        <div class="card-header">Цена вопроса</div>
+                                        <div class="card-body row">
+                                            <h5 class="card-title col-6 my-auto">@product.Price₽</h5>
+                                            <button type="button" class="btn btn-light col-5 my-auto" @onclick="@AddToActiveEstimate">Добавить в смету</button>
+                                            <InputNumber @bind-Value="productsEstimate.Count" class="form-control w-25 mb-2" placeholder="Количество" min="0"/>
+                                        </div>
+                                    </div>
+                                }
+                            </AuthorizeView>
+                        
+                                <AuthorizeView Roles="Admin">
+                                    <button type="button" class="btn btn-danger" @onclick="@DeleteProduct">Удалить</button>
+                                    <button type="button" class="btn btn-primary" @onclick="@SwapMode">Изменить</button>
+                                </AuthorizeView>
+                        </div>
+                    </div>
+
+		        </div>
+	        </div>
+        </div>
+    }
+    // ChangeMode
+    else
+    {
+        <div class="h-50 w-50 mx-auto">
+            <div class="card">
+                <div class="card-header text-center">
+                    @cProduct.Name (@cProduct.Category.Name)
+                </div>
+                <div class="card-body row">
+                    <div class="card text-dark bg-light mx-auto mb-3" style="max-width: 80%;">
+                        <div class="card-header text-center">Внешний вид</div>
+                        <div class="card-body">
+                            <img src="@cProduct.Image" class="img-fluid rounded m-1" alt="..." style="min-width: 100%">
+                            <InputFile OnChange="@SelectImage" />
+                        </div>
+                    </div>
+                    <div class="card text-dark bg-light mx-auto mb-3" style="max-width: 80%;">
+                        <div class="card-header text-center">Информация о товаре</div>
+                        <div class="card-body">
+                            <p class="card-text mb-0">Наименование товара</p>
+                            <InputText @bind-Value="cProduct.Name" class="form-control w-50" placeholder="Наименование товара" />
+                            <p class="card-text mb-0">Описание товара</p>
+                            <InputText @bind-Value="cProduct.Description" class="form-control w-50 mb-2" placeholder="Наименование товара" />
+                            <p>
+                                Категория
+                                <InputSelect @bind-Value="@selectedCategoryId">
+                                    @if (categories != null)
+                                    {
+                                        @foreach (var cat in categories)
+                                        {
+                                            <option value="@cat.Id">@cat.Name</option>
+                                        }
+                                    }
+                                </InputSelect>
+                            </p>
+                            <p class="card-text text-center fs-4">Характеристики</p>
+
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">#</th>
+                                        <th scope="col">Наименование</th>
+                                        <th scope="col">Значение</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (@cProduct.Characteristics.Count != 0)
+                                    {
+                                        int i = 1;
+                                        @foreach (var characteristic in cProduct.Characteristics)
+                                        {
+                                            <tr>
+                                                <th scope="row">@i</th>
+                                                <td>@characteristic.Name</td>
+                                                <td>
+                                                    <InputText @bind-Value="characteristic.Value" class="form-control w-50" placeholder="Значение" />
+                                                </td>
+                                            </tr>
+                                            i++;
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="row">
+                            <div class="card text-white bg-success mb-3 mx-auto" style="max-width: 45%;">
+                                <div class="card-header">Цена вопроса</div>
+                                <div class="card-body row">
+                                    <InputNumber @bind-Value="cProduct.Price" class="form-control w-50 mb-2" placeholder="Цена товара" />
+                                </div>
+                            </div>
+
+                            <AuthorizeView Roles="Admin">
+                                <button type="button" class="btn btn-success" @onclick="@UpdateProduct">Сохранить</button>
+                                <button type="button" class="btn btn-primary" @onclick="@SwapMode">Вернуться</button>
+                            </AuthorizeView>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    }
+
+}
+
+@code {
+    [Parameter]
+    public string? productId { get; set; }
+
+    private Product? product;
+    private ProductsEstimate productsEstimate = new();
+    private Estimate? activeEstimate;
+
+    private bool isChangeMode = false;
+
+    // CHANGE MODE-----
+
+    private List<IBrowserFile> selectedFiles = new List<IBrowserFile>();
+    private List<Category> categories;
+    private int selectedCategoryId;
+    private Product? cProduct;
+
+    //-----------------
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            var currentUser = await UserManager.GetUserAsync(user);
+            activeEstimate = await Service.GetActiveEstimateAsync(currentUser.Id);
+            StateHasChanged();
+        }
+
+        try
+        {
+            product = await Service.GetProductAsync(int.Parse(productId));
+            categories = await Service.GetCategoriesAsync();
+            cProduct = (Product)product.Clone();
+            if (product == null) throw new Exception();
+        }
+        catch
+        {
+            NavigationManager.NavigateTo("/catalog", forceLoad: true);
+        }
+    }
+
+    private async void AddToActiveEstimate()
+    {
+        productsEstimate.ProductId = product.Id;
+        productsEstimate.EstimateId = activeEstimate.Id;
+
+        await Service.CreateProductEstimateAsync(productsEstimate);
+        productsEstimate = new();
+    }
+
+    private async void UpdateProduct()
+    {
+        cProduct.CategoryId = selectedCategoryId;
+
+        foreach (var file in selectedFiles)
+        {
+            var path = "wwwroot\\products\\" + file.Name;
+            var savePath = $"/products/" + file.Name;
+
+
+            var ms = new MemoryStream();
+            await file.OpenReadStream(5120000).CopyToAsync(ms);
+            using (FileStream newFile = new FileStream(path, FileMode.Create, FileAccess.Write))
+            {
+                ms.WriteTo(newFile);
+            };
+
+            cProduct.Image = savePath;
+        }
+        await Service.UpdateProductAsync(cProduct);
+        NavigationManager.NavigateTo($"/catalog/{productId}", forceLoad: true);
+    }
+
+    private void SwapMode()
+    {
+        isChangeMode = !isChangeMode;
+        selectedCategoryId = cProduct.CategoryId;
+        StateHasChanged();
+    }
+
+    private async void DeleteProduct()
+    {
+        await Service.DeleteProductAsync(product);
+        NavigationManager.NavigateTo("/catalog", forceLoad: true);
+    }
+
+    // CHANGE MODE METHODS
+
+    private async Task SelectImage(InputFileChangeEventArgs e)
+    {
+        foreach (var file in e.GetMultipleFiles(1))
+            selectedFiles.Add(file);
+    }
+
+    //--------------------
+}

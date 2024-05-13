@@ -1,0 +1,177 @@
+﻿@page "/newproduct"
+@using CalculateApp.Data
+@using CalculateApp.Data.CalculateApp
+
+@inherits OwningComponentBase<CalculateAppService>
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Добавить товар</PageTitle>
+
+<div class="h-50 w-50 mx-auto">
+    <div class="card">
+        <div class="card-header text-center">
+            Добавление товара
+        </div>
+        <div class="card-body row">
+            <div class="card text-dark bg-light mx-auto mb-3" style="max-width: 80%;">
+                <div class="card-header text-center">Изображение</div>
+                <div class="card-body">
+                    <h5 class="card-title">Загрузите изображение!</h5>
+                    <p class="card-text">Выберите изображение своего товара </p>
+                    <InputFile OnChange="@SelectImage" />
+                </div>
+            </div>
+
+            <div class="card text-dark bg-light mx-auto" style="max-width: 80%;">
+                <div class="card-header text-center">Информация о товаре</div>
+                <div class="card-body">
+                    <p class="card-text m-0">Название</p>
+                    <InputText @bind-Value="nProduct.Name" class="form-control w-50" placeholder="Наименование товара" />
+                    <p class="card-text m-0">Описание товара</p>
+                    <InputText @bind-Value="nProduct.Description" class="form-control w-50" placeholder="Описание товара"/>
+                    <p class="card-text m-0">Цена</p>
+                    <InputNumber @bind-Value="nProduct.Price" class="form-control w-50 mb-2" placeholder="Цена товара"/>
+
+                    <p>
+                        Категория
+                        <InputSelect @bind-Value="@selectedCategoryId">
+                            @if (categories != null)
+                            {
+                                @foreach (var cat in categories)
+                                {
+                                    <option value="@cat.Id">@cat.Name</option>
+                                }
+                            }
+                        </InputSelect>
+                    </p>
+
+                    <p class="card-text text-center fs-4">Характеристики</p>
+                    <InputText @bind-Value="nCharacteristic.Name" class="form-control w-50 mb-1" placeholder="Наименование характеристики" />
+                    <InputText @bind-Value="nCharacteristic.Value" class="form-control w-50 mb-2" placeholder="Значение характеристики" />
+                    <button type="button" class="btn btn-success col-3 mx-auto mb-2" @onclick="@AddCharacteristic">Добавить</button>
+
+
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Наименование</th>
+                                <th scope="col">Значение</th>
+                                <th scope="col">Действие</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (characteristics.Count != 0)
+                            {
+                                int i = 1;
+                                @foreach (var characteristic in characteristics)
+                                {
+                                    <tr>
+                                        <th scope="row">@i</th>
+                                        <td>@characteristic.Name</td>
+                                        <td>@characteristic.Value</td>
+                                        <td>
+                                            <button class="btn btn-danger" @onclick="@(() => DeleteCharacteristic(characteristic.Id))">Удалить</button>
+                                        </td>
+                                    </tr>
+                                    i++;
+                                }
+                            }
+                        </tbody>
+                    </table>
+
+                    @if (invalidData)
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            Введены некорректные данные!
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-primary col-3 mx-auto mt-2" @onclick="@SaveProduct">Сохранить</button>
+        </div>
+    </div>
+</div>  
+
+@code {
+    private List<IBrowserFile> selectedFiles = new List<IBrowserFile>();
+    private List<Characteristic> characteristics = new List<Characteristic>();
+    private List<Category> categories;
+    private int? selectedCategoryId;
+
+    private Characteristic nCharacteristic = new();
+    private Product nProduct = new();
+
+    private bool invalidData = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        categories = await Service.GetCategoriesAsync();
+
+        StateHasChanged();
+
+        selectedCategoryId = categories.First().Id;
+    }
+
+    private void AddCharacteristic()
+    {
+        characteristics.Add(nCharacteristic);
+        nCharacteristic = new Characteristic();
+        StateHasChanged();
+    }
+
+    private void DeleteCharacteristic(int id)
+    {
+        characteristics.Remove(characteristics.Find(x => x.Id == id));
+        StateHasChanged();
+    }
+
+    private async void SaveProduct()
+    {
+        if (
+            characteristics.Count == 0
+            || string.IsNullOrWhiteSpace(nProduct.Name)
+            || string.IsNullOrWhiteSpace(nProduct.Description)
+            || selectedFiles.Count == 0
+         )
+        {
+            invalidData = true;
+            return;
+        }
+        else
+            invalidData = false;
+
+        nProduct.Characteristics = characteristics;
+        nProduct.CategoryId = (int)selectedCategoryId;
+
+        // Фото
+
+        foreach (var file in selectedFiles)
+        {
+            var path = "wwwroot\\products\\" + file.Name;
+            var savePath = $"/products/" + file.Name;
+
+
+            var ms = new MemoryStream();
+            await file.OpenReadStream(5120000).CopyToAsync(ms);
+            using (FileStream newFile = new FileStream(path, FileMode.Create, FileAccess.Write))
+            {
+                ms.WriteTo(newFile);
+            };
+
+            nProduct.Image = savePath;
+        }
+
+        await Service.CreateProductAsync(nProduct);
+
+        NavigationManager.NavigateTo("/catalog", forceLoad: true);
+    }
+
+    private async Task SelectImage(InputFileChangeEventArgs e)
+    {
+        foreach (var file in e.GetMultipleFiles(1))
+            selectedFiles.Add(file);
+    }
+}

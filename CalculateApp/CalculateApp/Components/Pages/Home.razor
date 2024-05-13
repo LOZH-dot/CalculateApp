@@ -1,0 +1,17 @@
+﻿@page "/"
+@using CalculateApp.Data
+@using CalculateApp.Data.CalculateApp
+
+@inherits OwningComponentBase<CalculateAppService>
+@rendermode InteractiveServer
+
+<PageTitle>Home</PageTitle>
+
+@code{
+    private List<Category> cat;
+
+    protected async override Task OnInitializedAsync()
+    {
+        cat = await Service.GetCategoriesAsync();
+    }
+}

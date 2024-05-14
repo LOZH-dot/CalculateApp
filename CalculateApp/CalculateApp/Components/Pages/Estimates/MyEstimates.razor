@@ -1,15 +1,18 @@
 ﻿@page "/myestimates"
+
 @using CalculateApp.Data
 @using CalculateApp.Data.CalculateApp
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
+@using  System.IO;
 
 @attribute [Authorize]
 @inherits OwningComponentBase<CalculateAppService>
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
-@inject NavigationManager NavigationManager;
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
 
 @rendermode InteractiveServer
 
@@ -78,6 +81,7 @@
                             <tr>
                                 <th scope="col">#</th>
                                 <th scope="col">Наименовение сметы</th>
+                                <th scope="col">Действие</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -86,6 +90,9 @@
                                 <tr>
                                     <th scope="row">@i</th>
                                     <td>@estimate.Name</td>
+                                    <td>
+                                        <button type="button" class="btn btn-success" @onclick="() => ExportEstimate(estimate)">Скачать смету</button>
+                                    </td>
                                 </tr>
 
                                 i++;
@@ -123,6 +130,11 @@
             AspUserId = currentUser.Id;
             StateHasChanged();
         }
+    }
+
+    private async Task ExportEstimate(Estimate estimate)
+    {
+        // TODO...
     }
 
     private async void CreateEstimate()

@@ -11,6 +11,13 @@ namespace CalculateApp.Data
             _context = context;
         }
 
+        public async Task<Category> CreateCategoryAsync(Category category)
+        {
+            _context.Categories.Add(category);
+            _context.SaveChanges();
+            return await Task.FromResult(category);
+        }
+
         public async Task<Estimate> CreateEstimateAsync(Estimate estimate)
         {
             _context.Estimates.Add(estimate);

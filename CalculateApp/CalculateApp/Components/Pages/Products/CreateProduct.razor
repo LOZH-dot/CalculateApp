@@ -46,10 +46,14 @@
                         </InputSelect>
                     </p>
 
+                    <p class="card-text m-0">Добавить категорию</p>
+                    <InputText @bind-Value="nCategory.Name" class="form-control w-50 mb-2" placeholder="Название категории" />
+                    <button type="button" class="btn btn-success col-3 mx-auto mb-2" @onclick="@AddCategory">Добавить</button>
+
                     <p class="card-text text-center fs-4">Характеристики</p>
                     <InputText @bind-Value="nCharacteristic.Name" class="form-control w-50 mb-1" placeholder="Наименование характеристики" />
                     <InputText @bind-Value="nCharacteristic.Value" class="form-control w-50 mb-2" placeholder="Значение характеристики" />
-                    <button type="button" class="btn btn-success col-3 mx-auto mb-2" @onclick="@AddCharacteristic">Добавить</button>
+                    <button type="button" class="btn btn-success col-3 mx-auto mb-2" @onclick="@AddCharacteristic">Добавить</button>           
 
 
                     <table class="table">
@@ -100,11 +104,20 @@
     private List<Characteristic> characteristics = new List<Characteristic>();
     private List<Category> categories;
     private int? selectedCategoryId;
+    private Category nCategory = new();
 
     private Characteristic nCharacteristic = new();
     private Product nProduct = new();
 
     private bool invalidData = false;
+
+    private async void AddCategory()
+    {
+        var nCat = await Service.CreateCategoryAsync(nCategory);
+        categories.Add(nCat);
+        nCategory = new();
+        StateHasChanged();
+    }
 
     protected override async Task OnInitializedAsync()
     {

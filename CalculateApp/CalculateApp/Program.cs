@@ -1,11 +1,13 @@
 using CalculateApp.Client.Pages;
 using CalculateApp.Components;
 using CalculateApp.Components.Account;
+using CalculateApp.Components.Pages.Estimates;
 using CalculateApp.Data;
 using CalculateApp.Data.CalculateApp;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.JSInterop;
 
 var builder = WebApplication.CreateBuilder(args);
 

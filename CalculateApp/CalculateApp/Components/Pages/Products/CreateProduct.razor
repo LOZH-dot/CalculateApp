@@ -36,7 +36,7 @@
                     <p>
                         Категория
                         <InputSelect @bind-Value="@selectedCategoryId">
-                            @if (categories != null)
+                            @if (categories != null && categories.Count != 0)
                             {
                                 @foreach (var cat in categories)
                                 {
@@ -102,7 +102,7 @@
 @code {
     private List<IBrowserFile> selectedFiles = new List<IBrowserFile>();
     private List<Characteristic> characteristics = new List<Characteristic>();
-    private List<Category> categories;
+    private List<Category>? categories;
     private int? selectedCategoryId;
     private Category nCategory = new();
 
@@ -125,7 +125,8 @@
 
         StateHasChanged();
 
-        selectedCategoryId = categories.First().Id;
+        if (categories != null && categories.Count != 0)
+            selectedCategoryId = categories.First().Id;
     }
 
     private void AddCharacteristic()

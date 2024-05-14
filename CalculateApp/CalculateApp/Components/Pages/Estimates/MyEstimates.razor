@@ -110,7 +110,7 @@
 </div>
 
 @code {
-    private List<Estimate> doneEstimates;
+    private List<Estimate>? doneEstimates;
     private Estimate? activeEstimate;
     private List<ProductsEstimate>? productsEstimates;
     private Estimate nEstimate = new();
@@ -124,7 +124,9 @@
         if (user.Identity.IsAuthenticated)
         {
             var currentUser = await UserManager.GetUserAsync(user);
+
             doneEstimates = await Service.GetDoneEstimatesAsync(currentUser.Id);
+
             activeEstimate = await Service.GetActiveEstimateAsync(currentUser.Id);
             productsEstimates = await Service.GetActiveProductsEstimatesAsync(currentUser.Id);
             AspUserId = currentUser.Id;

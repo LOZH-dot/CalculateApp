@@ -1,4 +1,5 @@
-﻿using CalculateApp.Data.CalculateApp;
+﻿using CalculateApp.Components.Pages.Catalog;
+using CalculateApp.Data.CalculateApp;
 using Microsoft.EntityFrameworkCore;
 
 namespace CalculateApp.Data
@@ -6,9 +7,39 @@ namespace CalculateApp.Data
     public class CalculateAppService
     {
         private readonly CalculateAppDBContext _context;
+
         public CalculateAppService(CalculateAppDBContext context)
         {
             _context = context;
+        }
+
+        public async Task<List<Product>> GetProductsAsync(CatalogFilterModel filterModel)
+        {
+            IQueryable<Product> request = _context.Set<Product>();
+
+            request = _context.Products
+                .AsNoTracking()
+                .Include(x => x.Characteristics)
+                .Include(x => x.Category);
+
+            if (filterModel.ProductName != null)
+                request = request.Where(x => x.Name.Contains(filterModel.ProductName));
+
+            if (filterModel.CategoryId != null)
+                request = request.Where(x => x.CategoryId == filterModel.CategoryId);
+
+            // Min + Max -
+            if (filterModel.PriceMin != null && filterModel.PriceMax == null)
+                request = request.Where(x => x.Price >= filterModel.PriceMin);
+            // Min - Max +
+            if (filterModel.PriceMin == null && filterModel.PriceMax != null)
+                request = request.Where(x => x.Price <= filterModel.PriceMax);
+            // Min + Max +
+            if (filterModel.PriceMin != null && filterModel.PriceMax == null)
+                request = request.Where(x => x.Price >= filterModel.PriceMin
+                && x.Price <= filterModel.PriceMin);
+
+            return await request.ToListAsync(); 
         }
 
         public async Task<Category> CreateCategoryAsync(Category category)

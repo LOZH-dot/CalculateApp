@@ -33,6 +33,9 @@
 					        <p class="card-text">Наименование товара: @product.Name</p>     
 					        <p class="card-text">Описание товара: @product.Description</p>          
 					        <p class="card-text">Категория: @product.Category.Name</p>
+                            @if (activeEstimate == null){
+                            <p class="card-text fs-4">Цена: <b>@product.Price₽</b></p>
+                            }
 					        <p class="card-text text-center fs-4">Характеристики</p>
 
                                 <table class="table">
@@ -112,7 +115,7 @@
                             <p>
                                 Категория
                                 <InputSelect @bind-Value="@selectedCategoryId">
-                                    @if (categories != null)
+                                    @if (categories.Count != 0)
                                     {
                                         @foreach (var cat in categories)
                                         {

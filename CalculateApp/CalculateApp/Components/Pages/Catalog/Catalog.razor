@@ -1,0 +1,92 @@
+﻿@page "/catalog"
+@using CalculateApp.Data
+@using CalculateApp.Data.CalculateApp
+
+@inherits OwningComponentBase<CalculateAppService>
+@rendermode InteractiveServer
+
+<PageTitle>Каталог</PageTitle>
+
+<!--Фильтрация-->
+<div class="card mb-5 w-75 mx-auto">
+    <div class="card-header text-center fs-4">
+        Фильтрация товара
+    </div>
+    <div class="card-body row">
+        <div class="w-25 mb-2 mx-auto">
+            <p class="card-text mb-0 text-center">Наименование товара</p>
+            <InputText @bind-Value="catalogFilterModel.ProductName" class="form-control w-100" placeholder="Наименование" />
+        </div>
+        <div class="w-25 mb-2 mx-auto text-center">
+            <p>
+                Категория
+                <InputSelect @bind-Value="@catalogFilterModel.CategoryId" class="form-control">
+                    <option value="0">Не выбран</option>
+                    @if (categories != null && categories.Count != 0)
+                        @foreach (var cat in categories)
+                        {
+                            <option value="@cat.Id">@cat.Name</option>
+                        }
+                </InputSelect>
+            </p>
+
+        </div>
+        <div class="w-25 mb-2 row mx-auto">
+            <p class="card-text mb-0 text-center">Цена</p>
+            <InputNumber @bind-Value="catalogFilterModel.PriceMin" class="form-control mx-auto" style="width: 40%" placeholder="Мин" />
+            <InputNumber @bind-Value="catalogFilterModel.PriceMax" class="form-control mx-auto" style="width: 40%" placeholder="Макс" />
+        </div>
+        <button class="btn btn-primary" @onclick="@Search">Искать!</button>
+    </div>
+</div>
+
+@if (products != null && products.Count != 0){
+
+    <!--Элементы каталога-->
+    <div class="container">
+        <div class="row">
+            @foreach (var product in products)
+            {
+                    <div class="card mb-3">
+                        <div class="row g-0">
+                            <div class="col-md-2">
+                                <img src="@product.Image" class="img-fluid rounded m-1" alt="..." style="min-width: 100%">
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body">
+                                    <a href="/catalog/@product.Id" class="link-secondary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fs-4">@product.Name</a>
+                                    <p class="card-text overflow-hidden" style="max-height: 100px;">@product.Description</p>
+                                    <p class="card-text col-2"><small class="text-muted">@product.Category.Name</small></p>
+                                </div>
+                            </div>
+                            <div class="col-2 text-center">
+                                <p class="mt-5 fs-3">@product.Price <b>₽</b></p>
+                            </div>
+                        </div>
+                    </div>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <p class="text-center">В каталоге нет товаров!</p>
+}
+
+@code {
+    private List<Product>? products;
+    private List<Category>? categories;
+    private CatalogFilterModel catalogFilterModel = new();
+
+    private async void Search()
+    {
+        products = await Service.GetProductsAsync(catalogFilterModel);
+        StateHasChanged();
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        products = await Service.GetProductsAsync();
+        categories = await Service.GetCategoriesAsync();
+    }
+}

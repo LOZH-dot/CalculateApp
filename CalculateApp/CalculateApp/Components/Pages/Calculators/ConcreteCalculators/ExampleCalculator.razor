@@ -1,0 +1,58 @@
+﻿@page "/calculators/example-calculator"
+
+@using CalculateApp.Data
+@using CalculateApp.Data.CalculateApp
+@using Microsoft.AspNetCore.Identity
+
+@inherits OwningComponentBase<CalculateAppService>
+@inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@rendermode InteractiveServer
+
+<div>
+    <p>
+        Выберите помещение
+        <InputSelect @bind-Value="@roomId" class="form-control">
+            @if (userRooms != null && userRooms.Count != 0)
+                @foreach (var room in userRooms)
+                {
+                    <option value="@room.Id">@room.Name</option>
+                }
+        </InputSelect>
+    </p>
+
+    @if (roomId != null)
+    {
+        var room = userRooms.First(x => x.Id == roomId);
+
+        <p>Длина: @room.Lenght</p>
+        <p>Ширина: @room.Width</p>
+        <p>Высота: @room.Height</p>
+    }
+</div>
+
+@code {
+    private List<Room>? userRooms;
+
+    private int? roomId = null;
+
+    protected async override Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            var currentUser = await UserManager.GetUserAsync(user);
+
+            userRooms = await Service.GetRoomsAsync(currentUser.Id);
+
+            try
+            {
+                roomId = userRooms.FirstOrDefault().Id;
+            } catch {}
+
+            StateHasChanged();
+        }
+    }
+}

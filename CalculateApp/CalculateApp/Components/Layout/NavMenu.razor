@@ -13,7 +13,7 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
             <div class="navbar-nav">
-                <button class="btn btn-secondary mx-1" aria-current="page" href="#">Калькуляторы</button>
+                <button class="btn btn-secondary mx-1" aria-current="page" @onclick="@(() => NavigationManager.NavigateTo("/calculators", forceLoad: true))">Калькуляторы</button>
                 <button class="btn btn-secondary mx-1" @onclick="@(() => NavigationManager.NavigateTo("/catalog", forceLoad: true))">Каталог товаров</button>
                 <AuthorizeView Roles="User,Admin">
                     <button class="btn btn-secondary mx-1" @onclick="@(() => NavigationManager.NavigateTo("/myrooms", forceLoad: true))">Ваши помещения</button>

@@ -97,12 +97,12 @@ public partial class CalculateAppDBContext : DbContext
 
             entity.HasOne(d => d.Estimate).WithMany(p => p.ProductsEstimates)
                 .HasForeignKey(d => d.EstimateId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK__ProductsE__Estim__60A75C0F");
 
             entity.HasOne(d => d.Product).WithMany(p => p.ProductsEstimates)
                 .HasForeignKey(d => d.ProductId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK__ProductsE__Produ__5FB337D6");
         });
 

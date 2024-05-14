@@ -14,6 +14,7 @@
 @inject ILogger<Register> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
+@inject RoleManager<IdentityRole> RoleManager
 
 <PageTitle>Register</PageTitle>
 
@@ -68,11 +69,14 @@
     public async Task RegisterUser(EditContext editContext)
     {
         var user = CreateUser();
-
         await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
+
         var emailStore = GetEmailStore();
         await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
         var result = await UserManager.CreateAsync(user, Input.Password);
+        await RoleManager.CreateAsync(new IdentityRole("User"));
+        await UserManager.AddToRoleAsync(user, "User");
+
 
         if (!result.Succeeded)
         {
